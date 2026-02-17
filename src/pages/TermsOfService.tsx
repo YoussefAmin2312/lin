@@ -59,7 +59,7 @@ const TermsOfService = () => {
                 <div>
                   <h3 className="text-xl font-light text-foreground mb-2">Payment Terms</h3>
                   <p className="text-muted-foreground leading-relaxed">
-                    Payment is due at the time of purchase. We accept major credit cards and other payment methods as displayed during checkout. All prices are in USD unless otherwise specified.
+                    Payment is due at the time of purchase. We accept major credit cards and other payment methods as displayed during checkout. All prices are in AED (UAE Dirham) unless otherwise specified.
                   </p>
                 </div>
               </div>
@@ -119,7 +119,7 @@ const TermsOfService = () => {
             <section>
               <h2 className="text-2xl font-light text-foreground mb-4">Governing Law</h2>
               <p className="text-muted-foreground leading-relaxed">
-                These terms and conditions are governed by and construed in accordance with the laws of New York State, and you irrevocably submit to the exclusive jurisdiction of the courts in that state or location.
+                These terms and conditions are governed by and construed in accordance with the laws of the United Arab Emirates, and you irrevocably submit to the exclusive jurisdiction of the courts of Dubai, UAE.
               </p>
             </section>
 
@@ -137,8 +137,8 @@ const TermsOfService = () => {
               </p>
               <div className="mt-4 text-muted-foreground">
                 <p>Email: legal@lineajewelry.com</p>
-                <p>Phone: +1 (212) 555-0123</p>
-                <p>Address: 123 Madison Avenue, New York, NY 10016</p>
+                <p>Phone: +971 4 555 0123</p>
+                <p>Address: The Dubai Mall, Fashion Avenue, Downtown Dubai, UAE</p>
               </div>
             </section>
           </div>
