@@ -9,24 +9,24 @@ import AboutSidebar from "../../components/about/AboutSidebar";
 const StoreLocator = () => {
   const stores = [
     {
-      name: "LINEA Madison Avenue",
-      address: "789 Madison Avenue, New York, NY 10065",
-      phone: "+1 (212) 555-0123",
-      hours: "Mon-Sat: 10AM-8PM, Sun: 12PM-6PM",
+      name: "LINEA Dubai Mall",
+      address: "The Dubai Mall, Fashion Avenue, Downtown Dubai, UAE",
+      phone: "+971 4 555 0123",
+      hours: "Sun-Thu: 10AM-10PM, Fri-Sat: 10AM-12AM",
       services: ["Personal Shopping", "Custom Design", "Repairs", "Appraisals"]
     },
     {
-      name: "LINEA Beverly Hills",
-      address: "456 Rodeo Drive, Beverly Hills, CA 90210",
-      phone: "+1 (310) 555-0456",
-      hours: "Mon-Sat: 10AM-8PM, Sun: 12PM-6PM",
+      name: "LINEA Mall of the Emirates",
+      address: "Mall of the Emirates, Al Barsha, Dubai, UAE",
+      phone: "+971 4 555 0456",
+      hours: "Sun-Thu: 10AM-10PM, Fri-Sat: 10AM-12AM",
       services: ["Personal Shopping", "Custom Design", "VIP Suites", "Repairs"]
     },
     {
-      name: "LINEA SoHo",
-      address: "123 Spring Street, New York, NY 10012",
-      phone: "+1 (212) 555-0789",
-      hours: "Mon-Sat: 11AM-8PM, Sun: 12PM-7PM",
+      name: "LINEA City Walk",
+      address: "City Walk, Al Wasl, Dubai, UAE",
+      phone: "+971 4 555 0789",
+      hours: "Sun-Thu: 10AM-10PM, Fri-Sat: 10AM-12AM",
       services: ["Browse & Buy", "Repairs", "Gift Wrapping"]
     }
   ];

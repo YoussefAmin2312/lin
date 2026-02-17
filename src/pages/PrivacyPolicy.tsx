@@ -122,8 +122,8 @@ const PrivacyPolicy = () => {
               </p>
               <div className="mt-4 text-muted-foreground">
                 <p>Email: privacy@lineajewelry.com</p>
-                <p>Phone: +1 (212) 555-0123</p>
-                <p>Address: 123 Madison Avenue, New York, NY 10016</p>
+                <p>Phone: +971 4 555 0123</p>
+                <p>Address: The Dubai Mall, Fashion Avenue, Downtown Dubai, UAE</p>
               </div>
             </section>
           </div>

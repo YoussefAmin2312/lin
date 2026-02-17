@@ -46,20 +46,20 @@ const Checkout = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentComplete, setPaymentComplete] = useState(false);
   
-  // Mock cart data - in a real app this would come from state management
+  // Mock cart data
   const [cartItems, setCartItems] = useState([
     {
       id: 1,
       name: "Pantheon Ring",
-      price: "€2,450",
+      price: "AED 8,990",
       quantity: 1,
       image: pantheonImage,
-      size: "54 EU / 7 US"
+      size: "54 EU"
     },
     {
       id: 2,
       name: "Eclipse Earrings", 
-      price: "€1,850",
+      price: "AED 6,790",
       quantity: 1,
       image: eclipseImage
     }
@@ -78,26 +78,26 @@ const Checkout = () => {
   };
 
   const subtotal = cartItems.reduce((sum, item) => {
-    const price = parseFloat(item.price.replace('€', '').replace(',', ''));
+    const price = parseFloat(item.price.replace('AED ', '').replace(',', ''));
     return sum + (price * item.quantity);
   }, 0);
 
   const getShippingCost = () => {
     switch (shippingOption) {
       case "express":
-        return 15;
+        return 55;
       case "overnight":
-        return 35;
+        return 130;
       default:
-        return 0; // Standard shipping is free
+        return 0;
     }
   };
   
   const shipping = getShippingCost();
-  const total = subtotal + shipping;
+  const vat = Math.round((subtotal + shipping) * 0.05);
+  const total = subtotal + shipping + vat;
 
   const handleDiscountSubmit = () => {
-    // Handle discount code submission
     console.log("Discount code submitted:", discountCode);
     setShowDiscountInput(false);
   };
@@ -120,10 +120,7 @@ const Checkout = () => {
 
   const handleCompleteOrder = async () => {
     setIsProcessing(true);
-    
-    // Simulate payment processing
     await new Promise(resolve => setTimeout(resolve, 2000));
-    
     setIsProcessing(false);
     setPaymentComplete(true);
   };
@@ -136,7 +133,7 @@ const Checkout = () => {
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            {/* Order Summary - First on mobile, last on desktop */}
+            {/* Order Summary */}
             <div className="lg:col-span-1 lg:order-2">
               <div className="bg-muted/20 p-8 rounded-none sticky top-6">
                 <h2 className="text-lg font-light text-foreground mb-6">Order Summary</h2>
@@ -157,7 +154,6 @@ const Checkout = () => {
                           <p className="text-sm text-muted-foreground">Size: {item.size}</p>
                         )}
                         
-                        {/* Quantity controls */}
                         <div className="flex items-center gap-2 mt-2">
                           <Button
                             variant="outline"
@@ -220,7 +216,7 @@ const Checkout = () => {
                 <div className="border-t border-muted-foreground/20 mt-4 pt-6">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span className="text-foreground">€{subtotal.toLocaleString()}</span>
+                    <span className="text-foreground">AED {subtotal.toLocaleString()}</span>
                   </div>
                 </div>
               </div>
@@ -287,7 +283,7 @@ const Checkout = () => {
                       value={customerDetails.phone}
                       onChange={(e) => handleCustomerDetailsChange("phone", e.target.value)}
                       className="mt-2 rounded-none"
-                      placeholder="Enter your phone number"
+                      placeholder="+971 XX XXX XXXX"
                     />
                   </div>
 
@@ -313,7 +309,7 @@ const Checkout = () => {
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <Label htmlFor="shippingCity" className="text-sm font-light text-foreground">
-                            City *
+                            City / Emirate *
                           </Label>
                           <Input
                             id="shippingCity"
@@ -321,12 +317,12 @@ const Checkout = () => {
                             value={shippingAddress.city}
                             onChange={(e) => handleShippingAddressChange("city", e.target.value)}
                             className="mt-2 rounded-none"
-                            placeholder="City"
+                            placeholder="Dubai"
                           />
                         </div>
                         <div>
                           <Label htmlFor="shippingPostalCode" className="text-sm font-light text-foreground">
-                            Postal Code *
+                            P.O. Box
                           </Label>
                           <Input
                             id="shippingPostalCode"
@@ -334,7 +330,7 @@ const Checkout = () => {
                             value={shippingAddress.postalCode}
                             onChange={(e) => handleShippingAddressChange("postalCode", e.target.value)}
                             className="mt-2 rounded-none"
-                            placeholder="Postal code"
+                            placeholder="P.O. Box"
                           />
                         </div>
                       </div>
@@ -349,7 +345,7 @@ const Checkout = () => {
                           value={shippingAddress.country}
                           onChange={(e) => handleShippingAddressChange("country", e.target.value)}
                           className="mt-2 rounded-none"
-                          placeholder="Country"
+                          placeholder="United Arab Emirates"
                         />
                       </div>
                     </div>
@@ -372,7 +368,7 @@ const Checkout = () => {
                     </div>
                   </div>
 
-                  {/* Billing Details - shown when checkbox is checked */}
+                  {/* Billing Details */}
                   {hasSeparateBilling && (
                     <div className="space-y-6 pt-4">
                       <h3 className="text-base font-light text-foreground">Billing Details</h3>
@@ -430,7 +426,7 @@ const Checkout = () => {
                           value={billingDetails.phone}
                           onChange={(e) => handleBillingDetailsChange("phone", e.target.value)}
                           className="mt-2 rounded-none"
-                          placeholder="Enter billing phone number"
+                          placeholder="+971 XX XXX XXXX"
                         />
                       </div>
 
@@ -451,7 +447,7 @@ const Checkout = () => {
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <Label htmlFor="billingCity" className="text-sm font-light text-foreground">
-                            City *
+                            City / Emirate *
                           </Label>
                           <Input
                             id="billingCity"
@@ -459,12 +455,12 @@ const Checkout = () => {
                             value={billingDetails.city}
                             onChange={(e) => handleBillingDetailsChange("city", e.target.value)}
                             className="mt-2 rounded-none"
-                            placeholder="City"
+                            placeholder="Dubai"
                           />
                         </div>
                         <div>
                           <Label htmlFor="billingPostalCode" className="text-sm font-light text-foreground">
-                            Postal Code *
+                            P.O. Box
                           </Label>
                           <Input
                             id="billingPostalCode"
@@ -472,7 +468,7 @@ const Checkout = () => {
                             value={billingDetails.postalCode}
                             onChange={(e) => handleBillingDetailsChange("postalCode", e.target.value)}
                             className="mt-2 rounded-none"
-                            placeholder="Postal code"
+                            placeholder="P.O. Box"
                           />
                         </div>
                       </div>
@@ -487,7 +483,7 @@ const Checkout = () => {
                           value={billingDetails.country}
                           onChange={(e) => handleBillingDetailsChange("country", e.target.value)}
                           className="mt-2 rounded-none"
-                          placeholder="Country"
+                          placeholder="United Arab Emirates"
                         />
                       </div>
                     </div>
@@ -524,7 +520,7 @@ const Checkout = () => {
                     </Label>
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    €15 • 1-2 business days
+                    AED 55 • 1-2 business days
                   </div>
                 </div>
 
@@ -536,7 +532,7 @@ const Checkout = () => {
                     </Label>
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    €35 • Next business day
+                    AED 130 • Next business day
                   </div>
                 </div>
               </RadioGroup>
@@ -630,17 +626,21 @@ const Checkout = () => {
                   <div className="bg-muted/10 p-6 rounded-none border border-muted-foreground/20 space-y-3">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Subtotal</span>
-                      <span className="text-foreground">€{subtotal.toLocaleString()}</span>
+                      <span className="text-foreground">AED {subtotal.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Shipping</span>
                       <span className="text-foreground">
-                        {shipping === 0 ? "Free" : `€${shipping}`}
+                        {shipping === 0 ? "Free" : `AED ${shipping}`}
                       </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">VAT (5%)</span>
+                      <span className="text-foreground">AED {vat.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-lg font-medium border-t border-muted-foreground/20 pt-3">
                       <span className="text-foreground">Total</span>
-                      <span className="text-foreground">€{total.toLocaleString()}</span>
+                      <span className="text-foreground">AED {total.toLocaleString()}</span>
                     </div>
                   </div>
 
@@ -649,7 +649,7 @@ const Checkout = () => {
                     disabled={isProcessing || !paymentDetails.cardNumber || !paymentDetails.expiryDate || !paymentDetails.cvv || !paymentDetails.cardholderName}
                     className="w-full rounded-none h-12 text-base"
                   >
-                    {isProcessing ? "Processing..." : `Complete Order • €${total.toLocaleString()}`}
+                    {isProcessing ? "Processing..." : `Complete Order • AED ${total.toLocaleString()}`}
                   </Button>
                 </div>
               ) : (

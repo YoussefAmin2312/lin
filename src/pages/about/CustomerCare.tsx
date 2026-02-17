@@ -28,8 +28,8 @@ const CustomerCare = () => {
           <div className="grid md:grid-cols-3 gap-8">
             <div className="space-y-4">
               <h3 className="text-lg font-light text-foreground">Phone</h3>
-              <p className="text-muted-foreground">+1 (555) 123-4567</p>
-              <p className="text-sm text-muted-foreground">Mon-Fri: 9AM-6PM EST<br />Sat: 10AM-4PM EST</p>
+              <p className="text-muted-foreground">+971 4 555 4567</p>
+              <p className="text-sm text-muted-foreground">Sun-Thu: 9AM-6PM GST<br />Sat: 10AM-4PM GST</p>
             </div>
             <div className="space-y-4">
               <h3 className="text-lg font-light text-foreground">Email</h3>
@@ -53,7 +53,7 @@ const CustomerCare = () => {
                 What are your shipping options and timeframes?
               </AccordionTrigger>
               <AccordionContent className="text-muted-foreground">
-                We offer free standard shipping (3-5 business days) on orders over $500. Express shipping (1-2 business days) is available for $25. All orders are fully insured and require signature confirmation.
+                We offer free standard shipping (3-5 business days) on orders over AED 1,500. Express shipping (1-2 business days) is available for AED 75. All orders are fully insured and require signature confirmation.
               </AccordionContent>
             </AccordionItem>
 
