@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "@/context/CartContext";
 import { searchProducts, Product } from "@/data/products";
+import { asset } from "@/lib/utils";
 import ShoppingBag from "./ShoppingBag";
 import AuthModal from "./AuthModal";
 
@@ -44,7 +45,7 @@ const Navigation = () => {
 
     imagesToPreload.forEach(src => {
       const img = new Image();
-      img.src = src;
+      img.src = asset(src);
     });
   }, []);
 
@@ -69,8 +70,8 @@ const Navigation = () => {
         "Watches"
       ],
       images: [
-        { src: "/rings-collection.png", alt: "Rings Collection", label: "Rings" },
-        { src: "/homepic.jpg", alt: "Earrings Collection", label: "Earrings" }
+        { src: asset("/rings-collection.png"), alt: "Rings Collection", label: "Rings" },
+        { src: asset("/homepic.jpg"), alt: "Earrings Collection", label: "Earrings" }
       ]
     },
     {
@@ -84,8 +85,8 @@ const Navigation = () => {
         "Pre-Orders"
       ],
       images: [
-        { src: "/ring-aurora.jpg", alt: "Aurora Ring", label: "Aurora Ring" },
-        { src: "/necklace-cosmos.jpg", alt: "Cosmos Necklace", label: "Cosmos Necklace" }
+        { src: asset("/ring-aurora.jpg"), alt: "Aurora Ring", label: "Aurora Ring" },
+        { src: asset("/necklace-cosmos.jpg"), alt: "Cosmos Necklace", label: "Cosmos Necklace" }
       ]
     },
     {
@@ -99,7 +100,7 @@ const Navigation = () => {
         "Store Locator"
       ],
       images: [
-        { src: "/founders.png", alt: "Company Founders", label: "Read our story" }
+        { src: asset("/founders.png"), alt: "Company Founders", label: "Read our story" }
       ]
     }
   ];
@@ -162,7 +163,7 @@ const Navigation = () => {
         <div className="absolute left-1/2 transform -translate-x-1/2">
           <Link to="/" className="block">
             <img
-              src="/LINEA-1.svg"
+              src={asset("/LINEA-1.svg")}
               alt="SINEA"
               className="h-6 w-auto"
             />

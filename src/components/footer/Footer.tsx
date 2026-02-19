@@ -1,3 +1,5 @@
+import { asset } from "@/lib/utils";
+
 const Footer = () => {
   return (
     <footer className="w-full bg-white text-black pt-8 pb-2 px-6 border-t border-[#e5e5e5] mt-48">
@@ -6,7 +8,7 @@ const Footer = () => {
           {/* Brand - Left side */}
           <div>
             <img
-              src="/Sinea_Jewelry_Inc-2.svg"
+              src={asset("/Sinea_Jewelry_Inc-2.svg")}
               alt="Sinea Jewelry Inc."
               className="mb-4 h-6 w-auto"
             />

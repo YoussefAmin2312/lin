@@ -1,5 +1,6 @@
 import linkBracelet from "@/assets/link-bracelet.png";
 import { Link } from "react-router-dom";
+import { asset } from "@/lib/utils";
 
 const FiftyFiftySection = () => {
   return (
@@ -9,7 +10,7 @@ const FiftyFiftySection = () => {
           <Link to="/category/earrings" className="block">
             <div className="w-full aspect-square mb-3 overflow-hidden">
               <img
-                src="/homepic.jpg"
+                src={asset("/homepic.jpg")}
                 alt="Earrings collection"
                 className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
               />
