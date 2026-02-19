@@ -1,81 +1,47 @@
-import { ArrowRight, X, Minus, Plus } from "lucide-react";
+import { ArrowRight, X } from "lucide-react";
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Link, useNavigate } from "react-router-dom";
+import { useCart } from "@/context/CartContext";
+import { searchProducts, Product } from "@/data/products";
 import ShoppingBag from "./ShoppingBag";
-import pantheonImage from "@/assets/pantheon.jpg";
-import eclipseImage from "@/assets/eclipse.jpg";
-import haloImage from "@/assets/halo.jpg";
-
-interface CartItem {
-  id: number;
-  name: string;
-  price: string;
-  image: string;
-  quantity: number;
-  category: string;
-}
+import AuthModal from "./AuthModal";
 
 const Navigation = () => {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [offCanvasType, setOffCanvasType] = useState<'favorites' | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isShoppingBagOpen, setIsShoppingBagOpen] = useState(false);
-  
-  // Shopping bag state with 3 mock items
-  const [cartItems, setCartItems] = useState<CartItem[]>([
-    {
-      id: 1,
-      name: "Pantheon",
-      price: "€2,850",
-      image: pantheonImage,
-      quantity: 1,
-      category: "Earrings"
-    },
-    {
-      id: 2,
-      name: "Eclipse",
-      price: "€3,200", 
-      image: eclipseImage,
-      quantity: 1,
-      category: "Bracelets"
-    },
-    {
-      id: 3,
-      name: "Halo",
-      price: "€1,950",
-      image: haloImage, 
-      quantity: 1,
-      category: "Earrings"
-    }
-  ]);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
 
-  const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-  
-  const updateQuantity = (id: number, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      setCartItems(items => items.filter(item => item.id !== id));
+  const { totalItems } = useCart();
+  const navigate = useNavigate();
+
+  // Search logic
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      const results = searchProducts(searchQuery);
+      setSearchResults(results);
     } else {
-      setCartItems(items => 
-        items.map(item => 
-          item.id === id ? { ...item, quantity: newQuantity } : item
-        )
-      );
+      setSearchResults([]);
     }
-  };
-  
+  }, [searchQuery]);
+
   // Preload dropdown images for faster display
   useEffect(() => {
     const imagesToPreload = [
       "/rings-collection.png",
-      "/earrings-collection.png", 
-      "/arcus-bracelet.png",
-      "/span-bracelet.png",
+      "/homepic.jpg",
+      "/ring-aurora.jpg",
+      "/necklace-cosmos.jpg",
+      "/model-ring.jpg",
+      "/model-necklace.jpg",
+      "/model-watch.jpg",
       "/founders.png"
     ];
-    
+
     imagesToPreload.forEach(src => {
       const img = new Image();
       img.src = src;
@@ -83,32 +49,32 @@ const Navigation = () => {
   }, []);
 
   const popularSearches = [
-    "Gold Rings",
-    "Silver Necklaces", 
-    "Pearl Earrings",
-    "Designer Bracelets",
-    "Wedding Rings",
-    "Vintage Collection"
+    "Pantheon",
+    "Eclipse",
+    "Earrings",
+    "Rings",
+    "Necklaces",
+    "Watches"
   ];
-  
+
   const navItems = [
-    { 
-      name: "Shop", 
+    {
+      name: "Shop",
       href: "/category/shop",
       submenuItems: [
         "Rings",
-        "Necklaces", 
+        "Necklaces",
         "Earrings",
         "Bracelets",
         "Watches"
       ],
       images: [
         { src: "/rings-collection.png", alt: "Rings Collection", label: "Rings" },
-        { src: "/earrings-collection.png", alt: "Earrings Collection", label: "Earrings" }
+        { src: "/homepic.jpg", alt: "Earrings Collection", label: "Earrings" }
       ]
     },
-    { 
-      name: "New in", 
+    {
+      name: "New in",
       href: "/category/new-in",
       submenuItems: [
         "This Week's Arrivals",
@@ -118,12 +84,12 @@ const Navigation = () => {
         "Pre-Orders"
       ],
       images: [
-        { src: "/arcus-bracelet.png", alt: "Arcus Bracelet", label: "Arcus Bracelet" },
-        { src: "/span-bracelet.png", alt: "Span Bracelet", label: "Span Bracelet" }
+        { src: "/ring-aurora.jpg", alt: "Aurora Ring", label: "Aurora Ring" },
+        { src: "/necklace-cosmos.jpg", alt: "Cosmos Necklace", label: "Cosmos Necklace" }
       ]
     },
-    { 
-      name: "About", 
+    {
+      name: "About",
       href: "/about/our-story",
       submenuItems: [
         "Our Story",
@@ -138,9 +104,19 @@ const Navigation = () => {
     }
   ];
 
+  const handleSearchSelect = (productId: number) => {
+    setIsSearchOpen(false);
+    setSearchQuery("");
+    navigate(`/product/${productId}`);
+  };
+
+  const handlePopularSearch = (term: string) => {
+    setSearchQuery(term);
+  };
+
   return (
-    <nav 
-      className="relative" 
+    <nav
+      className="relative"
       style={{
         backgroundColor: 'rgba(255, 255, 255, 0.9)',
         backdropFilter: 'blur(10px)'
@@ -154,15 +130,12 @@ const Navigation = () => {
           aria-label="Toggle menu"
         >
           <div className="w-5 h-5 relative">
-            <span className={`absolute block w-5 h-px bg-current transform transition-all duration-300 ${
-              isMobileMenuOpen ? 'rotate-45 top-2.5' : 'top-1.5'
-            }`}></span>
-            <span className={`absolute block w-5 h-px bg-current transform transition-all duration-300 top-2.5 ${
-              isMobileMenuOpen ? 'opacity-0' : 'opacity-100'
-            }`}></span>
-            <span className={`absolute block w-5 h-px bg-current transform transition-all duration-300 ${
-              isMobileMenuOpen ? '-rotate-45 top-2.5' : 'top-3.5'
-            }`}></span>
+            <span className={`absolute block w-5 h-px bg-current transform transition-all duration-300 ${isMobileMenuOpen ? 'rotate-45 top-2.5' : 'top-1.5'
+              }`}></span>
+            <span className={`absolute block w-5 h-px bg-current transform transition-all duration-300 top-2.5 ${isMobileMenuOpen ? 'opacity-0' : 'opacity-100'
+              }`}></span>
+            <span className={`absolute block w-5 h-px bg-current transform transition-all duration-300 ${isMobileMenuOpen ? '-rotate-45 top-2.5' : 'top-3.5'
+              }`}></span>
           </div>
         </button>
 
@@ -188,9 +161,9 @@ const Navigation = () => {
         {/* Center logo */}
         <div className="absolute left-1/2 transform -translate-x-1/2">
           <Link to="/" className="block">
-            <img 
-              src="/LINEA-1.svg" 
-              alt="LINEA" 
+            <img
+              src="/LINEA-1.svg"
+              alt="SINEA"
               className="h-6 w-auto"
             />
           </Link>
@@ -198,16 +171,21 @@ const Navigation = () => {
 
         {/* Right icons */}
         <div className="flex items-center space-x-2">
-          <button 
+          <button
             className="p-2 text-nav-foreground hover:text-nav-hover transition-colors duration-200"
             aria-label="Search"
-            onClick={() => setIsSearchOpen(!isSearchOpen)}
+            onClick={() => {
+              setIsSearchOpen(!isSearchOpen);
+              if (isSearchOpen) {
+                setSearchQuery("");
+              }
+            }}
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-5 h-5">
               <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
             </svg>
           </button>
-          <button 
+          <button
             className="hidden lg:block p-2 text-nav-foreground hover:text-nav-hover transition-colors duration-200"
             aria-label="Favorites"
             onClick={() => setOffCanvasType('favorites')}
@@ -216,7 +194,16 @@ const Navigation = () => {
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
             </svg>
           </button>
-          <button 
+          <button
+            className="hidden lg:block p-2 text-nav-foreground hover:text-nav-hover transition-colors duration-200"
+            aria-label="Account"
+            onClick={() => setIsAuthOpen(true)}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-5 h-5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+            </svg>
+          </button>
+          <button
             className="p-2 text-nav-foreground hover:text-nav-hover transition-colors duration-200 relative"
             aria-label="Shopping bag"
             onClick={() => setIsShoppingBagOpen(true)}
@@ -235,7 +222,7 @@ const Navigation = () => {
 
       {/* Full width dropdown */}
       {activeDropdown && (
-        <div 
+        <div
           className="absolute top-full left-0 right-0 bg-nav border-b border-border z-50"
           onMouseEnter={() => setActiveDropdown(activeDropdown)}
           onMouseLeave={() => setActiveDropdown(null)}
@@ -245,18 +232,18 @@ const Navigation = () => {
               {/* Left side - Menu items */}
               <div className="flex-1">
                 <ul className="space-y-2">
-                   {navItems
-                     .find(item => item.name === activeDropdown)
-                     ?.submenuItems.map((subItem, index) => (
+                  {navItems
+                    .find(item => item.name === activeDropdown)
+                    ?.submenuItems.map((subItem, index) => (
                       <li key={index}>
-                        <Link 
+                        <Link
                           to={activeDropdown === "About" ? `/about/${subItem.toLowerCase().replace(/\s+/g, '-')}` : `/category/${subItem.toLowerCase()}`}
                           className="text-nav-foreground hover:text-nav-hover transition-colors duration-200 text-sm font-light block py-2"
                         >
                           {subItem}
                         </Link>
                       </li>
-                   ))}
+                    ))}
                 </ul>
               </div>
 
@@ -271,15 +258,15 @@ const Navigation = () => {
                       if (image.label === "Rings") linkTo = "/category/rings";
                       else if (image.label === "Earrings") linkTo = "/category/earrings";
                     } else if (activeDropdown === "New in") {
-                      if (image.label === "Arcus Bracelet") linkTo = "/product/arcus-bracelet";
-                      else if (image.label === "Span Bracelet") linkTo = "/product/span-bracelet";
+                      if (image.label === "Aurora Ring") linkTo = "/product/11";
+                      else if (image.label === "Cosmos Necklace") linkTo = "/product/14";
                     } else if (activeDropdown === "About") {
                       linkTo = "/about/our-story";
                     }
-                    
+
                     return (
                       <Link key={index} to={linkTo} className="w-[400px] h-[280px] cursor-pointer group relative overflow-hidden block">
-                        <img 
+                        <img
                           src={image.src}
                           alt={image.alt}
                           className="w-full h-full object-cover transition-opacity duration-200 group-hover:opacity-90"
@@ -301,7 +288,7 @@ const Navigation = () => {
 
       {/* Search overlay */}
       {isSearchOpen && (
-        <div 
+        <div
           className="absolute top-full left-0 right-0 bg-nav border-b border-border z-50"
         >
           <div className="px-6 py-8">
@@ -315,26 +302,75 @@ const Navigation = () => {
                   <input
                     type="text"
                     placeholder="Search for jewelry..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     className="flex-1 bg-transparent text-nav-foreground placeholder:text-nav-foreground/60 outline-none text-lg"
                     autoFocus
                   />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="p-1 text-nav-foreground/60 hover:text-nav-foreground transition-colors"
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
                 </div>
               </div>
 
-              {/* Popular searches */}
-              <div>
-                <h3 className="text-nav-foreground text-sm font-light mb-4">Popular Searches</h3>
-                <div className="flex flex-wrap gap-3">
-                  {popularSearches.map((search, index) => (
-                    <button
-                      key={index}
-                      className="text-nav-foreground hover:text-nav-hover text-sm font-light py-2 px-4 border border-border rounded-full transition-colors duration-200 hover:border-nav-hover"
-                    >
-                      {search}
-                    </button>
-                  ))}
+              {/* Search results */}
+              {searchQuery.trim() && (
+                <div className="mb-8">
+                  <h3 className="text-nav-foreground text-sm font-light mb-4">
+                    {searchResults.length > 0
+                      ? `${searchResults.length} result${searchResults.length !== 1 ? 's' : ''} found`
+                      : 'No results found'
+                    }
+                  </h3>
+                  {searchResults.length > 0 && (
+                    <div className="space-y-3 max-h-80 overflow-y-auto">
+                      {searchResults.map((product) => (
+                        <button
+                          key={product.id}
+                          onClick={() => handleSearchSelect(product.id)}
+                          className="flex items-center gap-4 w-full text-left hover:bg-black/5 p-2 rounded transition-colors duration-200"
+                        >
+                          <div className="w-12 h-12 bg-muted/10 overflow-hidden flex-shrink-0">
+                            <img
+                              src={product.image}
+                              alt={product.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-nav-foreground truncate">{product.name}</p>
+                            <p className="text-xs font-light text-nav-foreground/60">{product.category}</p>
+                          </div>
+                          <p className="text-sm font-light text-nav-foreground flex-shrink-0">{product.price}</p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </div>
+              )}
+
+              {/* Popular searches - only show when not searching */}
+              {!searchQuery.trim() && (
+                <div>
+                  <h3 className="text-nav-foreground text-sm font-light mb-4">Popular Searches</h3>
+                  <div className="flex flex-wrap gap-3">
+                    {popularSearches.map((search, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handlePopularSearch(search)}
+                        className="text-nav-foreground hover:text-nav-hover text-sm font-light py-2 px-4 border border-border rounded-full transition-colors duration-200 hover:border-nav-hover"
+                      >
+                        {search}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -345,7 +381,7 @@ const Navigation = () => {
         <div className="lg:hidden absolute top-full left-0 right-0 bg-nav border-b border-border z-50">
           <div className="px-6 py-8">
             <div className="space-y-6">
-              {navItems.map((item, index) => (
+              {navItems.map((item) => (
                 <div key={item.name}>
                   <Link
                     to={item.href}
@@ -354,46 +390,50 @@ const Navigation = () => {
                   >
                     {item.name}
                   </Link>
-                   <div className="mt-3 pl-4 space-y-2">
-                     {item.submenuItems.map((subItem, subIndex) => (
-                       <Link
-                         key={subIndex}
-                         to={item.name === "About" ? `/about/${subItem.toLowerCase().replace(/\s+/g, '-')}` : `/category/${subItem.toLowerCase()}`}
-                         className="text-nav-foreground/70 hover:text-nav-hover text-sm font-light block py-1"
-                         onClick={() => setIsMobileMenuOpen(false)}
-                       >
-                         {subItem}
-                       </Link>
-                     ))}
-                   </div>
+                  <div className="mt-3 pl-4 space-y-2">
+                    {item.submenuItems.map((subItem, subIndex) => (
+                      <Link
+                        key={subIndex}
+                        to={item.name === "About" ? `/about/${subItem.toLowerCase().replace(/\s+/g, '-')}` : `/category/${subItem.toLowerCase()}`}
+                        className="text-nav-foreground/70 hover:text-nav-hover text-sm font-light block py-1"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        {subItem}
+                      </Link>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         </div>
       )}
-      
+
       {/* Shopping Bag Component */}
-      <ShoppingBag 
+      <ShoppingBag
         isOpen={isShoppingBagOpen}
         onClose={() => setIsShoppingBagOpen(false)}
-        cartItems={cartItems}
-        updateQuantity={updateQuantity}
         onViewFavorites={() => {
           setIsShoppingBagOpen(false);
           setOffCanvasType('favorites');
         }}
       />
-      
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+      />
+
       {/* Favorites Off-canvas overlay */}
       {offCanvasType === 'favorites' && (
         <div className="fixed inset-0 z-50 h-screen">
           {/* Backdrop */}
-          <div 
+          <div
             className="absolute inset-0 bg-black/50 h-screen"
             onClick={() => setOffCanvasType(null)}
           />
-          
+
           {/* Off-canvas panel */}
           <div className="absolute right-0 top-0 h-screen w-96 bg-background border-l border-border animate-slide-in-right flex flex-col">
             {/* Header */}
@@ -407,7 +447,7 @@ const Navigation = () => {
                 <X size={20} />
               </button>
             </div>
-            
+
             {/* Content */}
             <div className="p-6">
               <p className="text-muted-foreground text-sm mb-6">

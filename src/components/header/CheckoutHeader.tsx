@@ -7,8 +7,8 @@ const CheckoutHeader = () => {
       <div className="max-w-7xl mx-auto px-6 py-4">
         <div className="relative flex items-center justify-between">
           {/* Left side - Continue Shopping */}
-          <Link 
-            to="/" 
+          <Link
+            to="/"
             className="flex items-center gap-2 text-foreground hover:text-foreground/80 transition-colors"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -17,9 +17,9 @@ const CheckoutHeader = () => {
 
           {/* Center - Logo - Absolutely positioned to ensure perfect centering */}
           <Link to="/" className="absolute left-1/2 transform -translate-x-1/2">
-            <img 
-              src="/LINEA-1.svg" 
-              alt="Linea Jewelry Inc" 
+            <img
+              src="/LINEA-1.svg"
+              alt="Sinea Jewelry Inc"
               className="h-6 w-auto"
             />
           </Link>

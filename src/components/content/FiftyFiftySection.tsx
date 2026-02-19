@@ -1,4 +1,3 @@
-import earringsCollection from "@/assets/earrings-collection.png";
 import linkBracelet from "@/assets/link-bracelet.png";
 import { Link } from "react-router-dom";
 
@@ -9,9 +8,9 @@ const FiftyFiftySection = () => {
         <div>
           <Link to="/category/earrings" className="block">
             <div className="w-full aspect-square mb-3 overflow-hidden">
-              <img 
-                src={earringsCollection} 
-                alt="Earrings collection" 
+              <img
+                src="/homepic.jpg"
+                alt="Earrings collection"
                 className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
               />
             </div>
@@ -29,9 +28,9 @@ const FiftyFiftySection = () => {
         <div>
           <Link to="/category/bracelets" className="block">
             <div className="w-full aspect-square mb-3 overflow-hidden">
-              <img 
-                src={linkBracelet} 
-                alt="Chain link bracelet" 
+              <img
+                src={linkBracelet}
+                alt="Chain link bracelet"
                 className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
               />
             </div>

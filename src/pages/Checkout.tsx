@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Minus, Plus, CreditCard, Check } from "lucide-react";
+import { Minus, Plus, Check, Loader2, AlertCircle } from "lucide-react";
+import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import CheckoutHeader from "../components/header/CheckoutHeader";
 import Footer from "../components/footer/Footer";
 import { Button } from "@/components/ui/button";
@@ -7,23 +8,48 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
-import pantheonImage from "@/assets/pantheon.jpg";
-import eclipseImage from "@/assets/eclipse.jpg";
+import { useCart } from "@/context/CartContext";
+import { Link } from "react-router-dom";
+import { stripePromise, API_URL } from "@/lib/stripe";
 
-const Checkout = () => {
+// Stripe CardElement styling to match the site's aesthetic
+const CARD_ELEMENT_OPTIONS = {
+  style: {
+    base: {
+      fontSize: "16px",
+      color: "#1a1a1a",
+      fontFamily: '"Inter", system-ui, sans-serif',
+      fontWeight: "300",
+      "::placeholder": {
+        color: "#a1a1aa",
+      },
+    },
+    invalid: {
+      color: "#ef4444",
+      iconColor: "#ef4444",
+    },
+  },
+};
+
+// The inner checkout form that has access to Stripe hooks
+const CheckoutForm = () => {
+  const stripe = useStripe();
+  const elements = useElements();
+  const { cartItems, updateQuantity, subtotal, clearCart } = useCart();
+
   const [showDiscountInput, setShowDiscountInput] = useState(false);
   const [discountCode, setDiscountCode] = useState("");
   const [customerDetails, setCustomerDetails] = useState({
     email: "",
     firstName: "",
     lastName: "",
-    phone: ""
+    phone: "",
   });
   const [shippingAddress, setShippingAddress] = useState({
     address: "",
     city: "",
     postalCode: "",
-    country: ""
+    country: "",
   });
   const [hasSeparateBilling, setHasSeparateBilling] = useState(false);
   const [billingDetails, setBillingDetails] = useState({
@@ -34,53 +60,13 @@ const Checkout = () => {
     address: "",
     city: "",
     postalCode: "",
-    country: ""
+    country: "",
   });
   const [shippingOption, setShippingOption] = useState("standard");
-  const [paymentDetails, setPaymentDetails] = useState({
-    cardNumber: "",
-    expiryDate: "",
-    cvv: "",
-    cardholderName: ""
-  });
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentComplete, setPaymentComplete] = useState(false);
-  
-  // Mock cart data
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: "Pantheon Ring",
-      price: "AED 8,990",
-      quantity: 1,
-      image: pantheonImage,
-      size: "54 EU"
-    },
-    {
-      id: 2,
-      name: "Eclipse Earrings", 
-      price: "AED 6,790",
-      quantity: 1,
-      image: eclipseImage
-    }
-  ]);
-
-  const updateQuantity = (id: number, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      setCartItems(items => items.filter(item => item.id !== id));
-    } else {
-      setCartItems(items => 
-        items.map(item => 
-          item.id === id ? { ...item, quantity: newQuantity } : item
-        )
-      );
-    }
-  };
-
-  const subtotal = cartItems.reduce((sum, item) => {
-    const price = parseFloat(item.price.replace('AED ', '').replace(',', ''));
-    return sum + (price * item.quantity);
-  }, 0);
+  const [orderNumber, setOrderNumber] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const getShippingCost = () => {
     switch (shippingOption) {
@@ -92,7 +78,7 @@ const Checkout = () => {
         return 0;
     }
   };
-  
+
   const shipping = getShippingCost();
   const vat = Math.round((subtotal + shipping) * 0.05);
   const total = subtotal + shipping + vat;
@@ -103,57 +89,175 @@ const Checkout = () => {
   };
 
   const handleCustomerDetailsChange = (field: string, value: string) => {
-    setCustomerDetails(prev => ({ ...prev, [field]: value }));
+    setCustomerDetails((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleShippingAddressChange = (field: string, value: string) => {
-    setShippingAddress(prev => ({ ...prev, [field]: value }));
+    setShippingAddress((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleBillingDetailsChange = (field: string, value: string) => {
-    setBillingDetails(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handlePaymentDetailsChange = (field: string, value: string) => {
-    setPaymentDetails(prev => ({ ...prev, [field]: value }));
+    setBillingDetails((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleCompleteOrder = async () => {
+    if (!stripe || !elements) {
+      setErrorMessage("Payment system is still loading. Please wait.");
+      return;
+    }
+
+    const cardElement = elements.getElement(CardElement);
+    if (!cardElement) {
+      setErrorMessage("Card input not found. Please refresh.");
+      return;
+    }
+
+    if (!customerDetails.email || !customerDetails.firstName || !customerDetails.lastName) {
+      setErrorMessage("Please fill in all required customer details.");
+      return;
+    }
+    if (!shippingAddress.address || !shippingAddress.city || !shippingAddress.country) {
+      setErrorMessage("Please fill in all required shipping address fields.");
+      return;
+    }
+
     setIsProcessing(true);
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setIsProcessing(false);
-    setPaymentComplete(true);
+    setErrorMessage("");
+
+    try {
+      // Debug log — check this in browser console
+      console.log("Calling backend at:", API_URL);
+
+      // Step 1: Create PaymentIntent
+      const intentResponse = await fetch(`${API_URL}/api/payments/create-payment-intent`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: cartItems.map((item) => ({
+            id: item.id,
+            name: item.name,
+            priceNumeric: item.priceNumeric,
+            quantity: item.quantity,
+            category: item.category,
+          })),
+          shippingOption,
+          customer: {
+            email: customerDetails.email,
+            firstName: customerDetails.firstName,
+            lastName: customerDetails.lastName,
+          },
+        }),
+      });
+
+      const intentData = await intentResponse.json();
+      console.log("PaymentIntent response:", intentData);
+
+      if (!intentData.success) {
+        throw new Error(intentData.error || "Failed to create payment intent.");
+      }
+
+      const { clientSecret } = intentData.data;
+
+      // Step 2: Confirm payment with Stripe
+      const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: {
+          card: cardElement,
+          billing_details: {
+            name: `${customerDetails.firstName} ${customerDetails.lastName}`,
+            email: customerDetails.email,
+            phone: customerDetails.phone || undefined,
+          },
+        },
+      });
+
+      if (stripeError) {
+        throw new Error(stripeError.message || "Payment failed.");
+      }
+
+      if (paymentIntent?.status === "succeeded") {
+        // Step 3: Save the order
+        const orderResponse = await fetch(`${API_URL}/api/orders`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            customer: customerDetails,
+            shippingAddress,
+            billingAddress: hasSeparateBilling ? billingDetails : shippingAddress,
+            items: cartItems.map((item) => ({
+              id: item.id,
+              name: item.name,
+              priceNumeric: item.priceNumeric,
+              quantity: item.quantity,
+              category: item.category,
+              image: item.image,
+            })),
+            shippingOption,
+            paymentIntentId: paymentIntent.id,
+          }),
+        });
+
+        const orderData = await orderResponse.json();
+
+        if (orderData.success && orderData.data?.orderNumber) {
+          setOrderNumber(orderData.data.orderNumber);
+        }
+
+        setPaymentComplete(true);
+        clearCart();
+      }
+    } catch (err: any) {
+      console.error("Payment error:", err);
+      setErrorMessage(err.message || "Something went wrong. Please try again.");
+    } finally {
+      setIsProcessing(false);
+    }
   };
+
+  if (cartItems.length === 0 && !paymentComplete) {
+    return (
+      <div className="min-h-screen bg-background">
+        <CheckoutHeader />
+        <main className="pt-6 pb-12">
+          <div className="max-w-7xl mx-auto px-6 text-center py-20">
+            <h1 className="text-2xl font-light text-foreground mb-4">Your bag is empty</h1>
+            <p className="text-muted-foreground mb-6">Add items to your bag before checking out.</p>
+            <Link to="/category/shop" className="text-sm font-light underline text-foreground hover:text-muted-foreground">
+              Browse All Products
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
       <CheckoutHeader />
-      
+
       <main className="pt-6 pb-12">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
+
             {/* Order Summary */}
             <div className="lg:col-span-1 lg:order-2">
               <div className="bg-muted/20 p-8 rounded-none sticky top-6">
                 <h2 className="text-lg font-light text-foreground mb-6">Order Summary</h2>
-                
+
                 <div className="space-y-6">
                   {cartItems.map((item) => (
                     <div key={item.id} className="flex gap-4">
                       <div className="w-20 h-20 bg-muted rounded-none overflow-hidden">
-                        <img 
-                          src={item.image} 
+                        <img
+                          src={item.image}
                           alt={item.name}
                           className="w-full h-full object-cover"
                         />
                       </div>
                       <div className="flex-1">
                         <h3 className="font-light text-foreground">{item.name}</h3>
-                        {item.size && (
-                          <p className="text-sm text-muted-foreground">Size: {item.size}</p>
-                        )}
-                        
+                        <p className="text-sm text-muted-foreground">{item.category}</p>
+
                         <div className="flex items-center gap-2 mt-2">
                           <Button
                             variant="outline"
@@ -176,7 +280,7 @@ const Checkout = () => {
                           </Button>
                         </div>
                       </div>
-                      <div className="text-foreground font-medium">
+                      <div className="text-foreground font-medium text-sm">
                         {item.price}
                       </div>
                     </div>
@@ -186,7 +290,7 @@ const Checkout = () => {
                 {/* Discount Code Section */}
                 <div className="mt-8 pt-6 border-t border-muted-foreground/20">
                   {!showDiscountInput ? (
-                    <button 
+                    <button
                       onClick={() => setShowDiscountInput(true)}
                       className="text-sm text-foreground underline hover:no-underline transition-all"
                     >
@@ -202,7 +306,7 @@ const Checkout = () => {
                           placeholder="Enter discount code"
                           className="flex-1 rounded-none"
                         />
-                        <button 
+                        <button
                           onClick={handleDiscountSubmit}
                           className="text-sm text-foreground underline hover:no-underline transition-all px-2"
                         >
@@ -228,7 +332,7 @@ const Checkout = () => {
               {/* Customer Details Form */}
               <div className="bg-muted/20 p-8 rounded-none">
                 <h2 className="text-lg font-light text-foreground mb-6">Customer Details</h2>
-                
+
                 <div className="space-y-6">
                   <div>
                     <Label htmlFor="email" className="text-sm font-light text-foreground">
@@ -290,7 +394,7 @@ const Checkout = () => {
                   {/* Shipping Address */}
                   <div className="border-t border-muted-foreground/20 pt-6 mt-8">
                     <h3 className="text-base font-light text-foreground mb-4">Shipping Address</h3>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <Label htmlFor="shippingAddress" className="text-sm font-light text-foreground">
@@ -359,8 +463,8 @@ const Checkout = () => {
                         checked={hasSeparateBilling}
                         onCheckedChange={(checked) => setHasSeparateBilling(checked === true)}
                       />
-                      <Label 
-                        htmlFor="separateBilling" 
+                      <Label
+                        htmlFor="separateBilling"
                         className="text-sm font-light text-foreground cursor-pointer"
                       >
                         Other billing address
@@ -372,7 +476,7 @@ const Checkout = () => {
                   {hasSeparateBilling && (
                     <div className="space-y-6 pt-4">
                       <h3 className="text-base font-light text-foreground">Billing Details</h3>
-                      
+
                       <div>
                         <Label htmlFor="billingEmail" className="text-sm font-light text-foreground">
                           Email Address *
@@ -491,177 +595,140 @@ const Checkout = () => {
                 </div>
               </div>
 
-            {/* Shipping Options */}
-            <div className="bg-muted/20 p-8 rounded-none">
-              <h2 className="text-lg font-light text-foreground mb-6">Shipping Options</h2>
-              
-              <RadioGroup 
-                value={shippingOption} 
-                onValueChange={setShippingOption}
-                className="space-y-4"
-              >
-                <div className="flex items-center justify-between p-4 border border-muted-foreground/20 rounded-none">
-                  <div className="flex items-center space-x-3">
-                    <RadioGroupItem value="standard" id="standard" />
-                    <Label htmlFor="standard" className="font-light text-foreground">
-                      Standard Shipping
-                    </Label>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    Free • 3-5 business days
-                  </div>
-                </div>
+              {/* Shipping Options */}
+              <div className="bg-muted/20 p-8 rounded-none">
+                <h2 className="text-lg font-light text-foreground mb-6">Shipping Options</h2>
 
-                <div className="flex items-center justify-between p-4 border border-muted-foreground/20 rounded-none">
-                  <div className="flex items-center space-x-3">
-                    <RadioGroupItem value="express" id="express" />
-                    <Label htmlFor="express" className="font-light text-foreground">
-                      Express Shipping
-                    </Label>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    AED 55 • 1-2 business days
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between p-4 border border-muted-foreground/20 rounded-none">
-                  <div className="flex items-center space-x-3">
-                    <RadioGroupItem value="overnight" id="overnight" />
-                    <Label htmlFor="overnight" className="font-light text-foreground">
-                      Overnight Delivery
-                    </Label>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    AED 130 • Next business day
-                  </div>
-                </div>
-              </RadioGroup>
-            </div>
-
-            {/* Payment Section */}
-            <div className="bg-muted/20 p-8 rounded-none">
-              <h2 className="text-lg font-light text-foreground mb-6">Payment Details</h2>
-              
-              {!paymentComplete ? (
-                <div className="space-y-6">
-                  <div>
-                    <Label htmlFor="cardholderName" className="text-sm font-light text-foreground">
-                      Cardholder Name *
-                    </Label>
-                    <Input
-                      id="cardholderName"
-                      type="text"
-                      value={paymentDetails.cardholderName}
-                      onChange={(e) => handlePaymentDetailsChange("cardholderName", e.target.value)}
-                      className="mt-2 rounded-none"
-                      placeholder="Name on card"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="cardNumber" className="text-sm font-light text-foreground">
-                      Card Number *
-                    </Label>
-                    <div className="relative mt-2">
-                      <Input
-                        id="cardNumber"
-                        type="text"
-                        value={paymentDetails.cardNumber}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/\s/g, '').replace(/(.{4})/g, '$1 ').trim();
-                          if (value.length <= 19) {
-                            handlePaymentDetailsChange("cardNumber", value);
-                          }
-                        }}
-                        className="rounded-none pl-10"
-                        placeholder="4242 4242 4242 4242"
-                        maxLength={19}
-                      />
-                      <CreditCard className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="expiryDate" className="text-sm font-light text-foreground">
-                        Expiry Date *
+                <RadioGroup
+                  value={shippingOption}
+                  onValueChange={setShippingOption}
+                  className="space-y-4"
+                >
+                  <div className="flex items-center justify-between p-4 border border-muted-foreground/20 rounded-none">
+                    <div className="flex items-center space-x-3">
+                      <RadioGroupItem value="standard" id="standard" />
+                      <Label htmlFor="standard" className="font-light text-foreground">
+                        Standard Shipping
                       </Label>
-                      <Input
-                        id="expiryDate"
-                        type="text"
-                        value={paymentDetails.expiryDate}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/\D/g, '').replace(/(\d{2})(\d{2})/, '$1/$2');
-                          if (value.length <= 5) {
-                            handlePaymentDetailsChange("expiryDate", value);
-                          }
-                        }}
-                        className="mt-2 rounded-none"
-                        placeholder="MM/YY"
-                        maxLength={5}
-                      />
                     </div>
-                    <div>
-                      <Label htmlFor="cvv" className="text-sm font-light text-foreground">
-                        CVV *
+                    <div className="text-sm text-muted-foreground">
+                      Free • 3-5 business days
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 border border-muted-foreground/20 rounded-none">
+                    <div className="flex items-center space-x-3">
+                      <RadioGroupItem value="express" id="express" />
+                      <Label htmlFor="express" className="font-light text-foreground">
+                        Express Shipping
                       </Label>
-                      <Input
-                        id="cvv"
-                        type="text"
-                        value={paymentDetails.cvv}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/\D/g, '');
-                          if (value.length <= 3) {
-                            handlePaymentDetailsChange("cvv", value);
-                          }
-                        }}
-                        className="mt-2 rounded-none"
-                        placeholder="123"
-                        maxLength={3}
-                      />
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      AED 55 • 1-2 business days
                     </div>
                   </div>
 
-                  {/* Order Total Summary */}
-                  <div className="bg-muted/10 p-6 rounded-none border border-muted-foreground/20 space-y-3">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Subtotal</span>
-                      <span className="text-foreground">AED {subtotal.toLocaleString()}</span>
+                  <div className="flex items-center justify-between p-4 border border-muted-foreground/20 rounded-none">
+                    <div className="flex items-center space-x-3">
+                      <RadioGroupItem value="overnight" id="overnight" />
+                      <Label htmlFor="overnight" className="font-light text-foreground">
+                        Overnight Delivery
+                      </Label>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Shipping</span>
-                      <span className="text-foreground">
-                        {shipping === 0 ? "Free" : `AED ${shipping}`}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">VAT (5%)</span>
-                      <span className="text-foreground">AED {vat.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between text-lg font-medium border-t border-muted-foreground/20 pt-3">
-                      <span className="text-foreground">Total</span>
-                      <span className="text-foreground">AED {total.toLocaleString()}</span>
+                    <div className="text-sm text-muted-foreground">
+                      AED 130 • Next business day
                     </div>
                   </div>
+                </RadioGroup>
+              </div>
 
-                  <Button
-                    onClick={handleCompleteOrder}
-                    disabled={isProcessing || !paymentDetails.cardNumber || !paymentDetails.expiryDate || !paymentDetails.cvv || !paymentDetails.cardholderName}
-                    className="w-full rounded-none h-12 text-base"
-                  >
-                    {isProcessing ? "Processing..." : `Complete Order • AED ${total.toLocaleString()}`}
-                  </Button>
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                    <Check className="h-8 w-8 text-green-600" />
+              {/* Payment Section */}
+              <div className="bg-muted/20 p-8 rounded-none">
+                <h2 className="text-lg font-light text-foreground mb-6">Payment Details</h2>
+
+                {!paymentComplete ? (
+                  <div className="space-y-6">
+                    {/* Stripe Card Element */}
+                    <div>
+                      <Label className="text-sm font-light text-foreground">
+                        Card Details *
+                      </Label>
+                      <div className="mt-2 p-3 border border-input bg-background rounded-none">
+                        <CardElement options={CARD_ELEMENT_OPTIONS} />
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Secure payment powered by Stripe
+                      </p>
+                    </div>
+
+                    {/* Error Message */}
+                    {errorMessage && (
+                      <div className="flex items-center gap-2 p-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-none">
+                        <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                        <span>{errorMessage}</span>
+                      </div>
+                    )}
+
+                    {/* Order Total Summary */}
+                    <div className="bg-muted/10 p-6 rounded-none border border-muted-foreground/20 space-y-3">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Subtotal</span>
+                        <span className="text-foreground">AED {subtotal.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Shipping</span>
+                        <span className="text-foreground">
+                          {shipping === 0 ? "Free" : `AED ${shipping}`}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">VAT (5%)</span>
+                        <span className="text-foreground">AED {vat.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between text-lg font-medium border-t border-muted-foreground/20 pt-3">
+                        <span className="text-foreground">Total</span>
+                        <span className="text-foreground">AED {total.toLocaleString()}</span>
+                      </div>
+                    </div>
+
+                    <Button
+                      onClick={handleCompleteOrder}
+                      disabled={isProcessing || !stripe}
+                      className="w-full rounded-none h-12 text-base"
+                    >
+                      {isProcessing ? (
+                        <span className="flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Processing Payment...
+                        </span>
+                      ) : (
+                        `Complete Order • AED ${total.toLocaleString()}`
+                      )}
+                    </Button>
                   </div>
-                  <h3 className="text-xl font-light text-foreground mb-2">Order Complete!</h3>
-                  <p className="text-muted-foreground">Thank you for your purchase. Your order confirmation has been sent to your email.</p>
-                 </div>
-               )}
-             </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                      <Check className="h-8 w-8 text-green-600" />
+                    </div>
+                    <h3 className="text-xl font-light text-foreground mb-2">Order Complete!</h3>
+                    {orderNumber && (
+                      <p className="text-sm font-medium text-foreground mb-2">
+                        Order #{orderNumber}
+                      </p>
+                    )}
+                    <p className="text-muted-foreground">
+                      Thank you for your purchase. Your order confirmation has been sent to your email.
+                    </p>
+                    <Link
+                      to="/"
+                      className="inline-block mt-6 text-sm font-light underline text-foreground hover:text-muted-foreground"
+                    >
+                      Continue Shopping
+                    </Link>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -669,6 +736,15 @@ const Checkout = () => {
 
       <Footer />
     </div>
+  );
+};
+
+// Wrapper component that provides the Stripe context
+const Checkout = () => {
+  return (
+    <Elements stripe={stripePromise}>
+      <CheckoutForm />
+    </Elements>
   );
 };
 

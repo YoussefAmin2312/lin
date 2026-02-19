@@ -9,24 +9,24 @@ const OurStory = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
       <div className="flex">
         <div className="hidden lg:block">
           <AboutSidebar />
         </div>
-        
+
         <main className="w-full lg:w-[70vw] lg:ml-auto px-6">
-          <PageHeader 
-            title="Our Story" 
+          <PageHeader
+            title="Our Story"
             subtitle="A journey of passion, craftsmanship, and timeless elegance"
           />
-          
+
           <ContentSection>
             <ImageTextBlock
               image="/founders.png"
               imageAlt="Company founders"
               title="Founded on Passion"
-              content="LINEA Jewelry was born from a shared vision of creating timeless pieces that transcend fleeting trends. Our founders, united by their passion for exceptional craftsmanship and sustainable practices, established the brand with a commitment to creating jewelry that tells a story - your story."
+              content="SINEA Jewelry was born from a shared vision of creating timeless pieces that transcend fleeting trends. Our founders, united by their passion for exceptional craftsmanship and sustainable practices, established the brand with a commitment to creating jewelry that tells a story - your story."
               imagePosition="left"
             />
           </ContentSection>
@@ -72,7 +72,7 @@ const OurStory = () => {
           </ContentSection>
         </main>
       </div>
-      
+
       <Footer />
     </div>
   );

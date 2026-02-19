@@ -9,7 +9,7 @@ interface Store {
 
 const stores: Store[] = [
   {
-    name: "LINEA Dubai Mall",
+    name: "SINEA Dubai Mall",
     address: "The Dubai Mall, Fashion Avenue, Downtown Dubai",
     phone: "+971 4 555 0123",
     hours: "Sun-Thu: 10AM-10PM, Fri-Sat: 10AM-12AM",
@@ -17,7 +17,7 @@ const stores: Store[] = [
     lng: 55.2744
   },
   {
-    name: "LINEA Mall of the Emirates",
+    name: "SINEA Mall of the Emirates",
     address: "Mall of the Emirates, Al Barsha, Dubai",
     phone: "+971 4 555 0456",
     hours: "Sun-Thu: 10AM-10PM, Fri-Sat: 10AM-12AM",
@@ -25,7 +25,7 @@ const stores: Store[] = [
     lng: 55.2008
   },
   {
-    name: "LINEA City Walk",
+    name: "SINEA City Walk",
     address: "City Walk, Al Wasl, Dubai",
     phone: "+971 4 555 0789",
     hours: "Sun-Thu: 10AM-10PM, Fri-Sat: 10AM-12AM",
@@ -48,7 +48,7 @@ const StoreMap = () => {
         referrerPolicy="no-referrer-when-downgrade"
         className="w-full h-full"
       />
-      
+
       {/* Overlay with store markers */}
       <div className="absolute top-4 left-4 bg-background/90 backdrop-blur-sm rounded-lg p-4 max-w-xs">
         <h4 className="text-sm font-medium text-foreground mb-3">Our Locations</h4>
