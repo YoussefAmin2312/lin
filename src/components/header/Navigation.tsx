@@ -70,8 +70,8 @@ const Navigation = () => {
         "Watches"
       ],
       images: [
-        { src: asset("/rings-collection.png"), alt: "Rings Collection", label: "Rings" },
-        { src: asset("/homepic.jpg"), alt: "Earrings Collection", label: "Earrings" }
+        { src: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&q=80&w=800", alt: "Rings Collection", label: "Rings" },
+        { src: "https://images.unsplash.com/photo-1599643478524-fb66f70a00eb?auto=format&fit=crop&q=80&w=800", alt: "Earrings Collection", label: "Earrings" }
       ]
     },
     {
@@ -85,8 +85,8 @@ const Navigation = () => {
         "Pre-Orders"
       ],
       images: [
-        { src: asset("/ring-aurora.jpg"), alt: "Aurora Ring", label: "Aurora Ring" },
-        { src: asset("/necklace-cosmos.jpg"), alt: "Cosmos Necklace", label: "Cosmos Necklace" }
+        { src: "https://images.unsplash.com/photo-1515562141207-7a8efd3f8cb1?auto=format&fit=crop&q=80&w=800", alt: "Aurora Ring", label: "Aurora Ring" },
+        { src: "https://images.unsplash.com/photo-1599643477874-510ee495aa97?auto=format&fit=crop&q=80&w=800", alt: "Cosmos Necklace", label: "Cosmos Necklace" }
       ]
     },
     {
@@ -100,7 +100,7 @@ const Navigation = () => {
         "Store Locator"
       ],
       images: [
-        { src: asset("/founders.png"), alt: "Company Founders", label: "Read our story" }
+        { src: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&q=80&w=800", alt: "Company Founders", label: "Read our story" }
       ]
     }
   ];

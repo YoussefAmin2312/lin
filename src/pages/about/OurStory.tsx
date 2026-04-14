@@ -23,7 +23,7 @@ const OurStory = () => {
 
           <ContentSection>
             <ImageTextBlock
-              image="/founders.png"
+              image="https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&q=80&w=800"
               imageAlt="Company founders"
               title="Founded on Passion"
               content="SINEA Jewelry was born from a shared vision of creating timeless pieces that transcend fleeting trends. Our founders, united by their passion for exceptional craftsmanship and sustainable practices, established the brand with a commitment to creating jewelry that tells a story - your story."
